@@ -36,16 +36,38 @@ KATIB_ROOT="$(pwd)"
 SWAGGER_CODEGEN_CONF="hack/python-api/swagger_config.json"
 SWAGGER_CODEGEN_FILE="api/openapi-spec/swagger.json"
 
-echo "Generating Python API models for Kubeflow Katib using ${CONTAINER_RUNTIME}..."
-# We need to add user to allow container override existing files.
-${CONTAINER_RUNTIME} run --user "$(id -u)":"$(id -g)" --rm \
-  -v "${KATIB_ROOT}:/local" docker.io/openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION} generate \
-  -g python \
-  -i "local/${SWAGGER_CODEGEN_FILE}" \
-  -c "local/${SWAGGER_CODEGEN_CONF}" \
-  -o "local/${API_OUTPUT_PATH}" \
-  -p=packageVersion="${API_VERSION}" \
-  --global-property models,modelTests=false,modelDocs=false,supportingFiles=__init__.py
+# Check if the container image supports the current platform; fall back to java -jar if not.
+PLATFORM_SUPPORTED=true
+if ! ${CONTAINER_RUNTIME} pull --quiet docker.io/openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION} > /dev/null 2>&1; then
+  PLATFORM_SUPPORTED=false
+fi
+
+if [ "${PLATFORM_SUPPORTED}" = "true" ]; then
+  echo "Generating Python API models for Kubeflow Katib using ${CONTAINER_RUNTIME}..."
+  # We need to add user to allow container override existing files.
+  ${CONTAINER_RUNTIME} run --user "$(id -u)":"$(id -g)" --rm \
+    -v "${KATIB_ROOT}:/local" docker.io/openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION} generate \
+    -g python \
+    -i "local/${SWAGGER_CODEGEN_FILE}" \
+    -c "local/${SWAGGER_CODEGEN_CONF}" \
+    -o "local/${API_OUTPUT_PATH}" \
+    -p=packageVersion="${API_VERSION}" \
+    --global-property models,modelTests=false,modelDocs=false,supportingFiles=__init__.py
+else
+  echo "Container image not available for this platform; falling back to java -jar..."
+  OPENAPI_JAR="${KATIB_ROOT}/hack/gen-python-sdk/openapi-generator-cli.jar"
+  if ! test -f "${OPENAPI_JAR}"; then
+    echo "Downloading openapi-generator-cli JAR..."
+    wget -O "${OPENAPI_JAR}" "https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/4.3.1/openapi-generator-cli-4.3.1.jar"
+  fi
+  java -jar "${OPENAPI_JAR}" generate \
+    -g python \
+    -i "${SWAGGER_CODEGEN_FILE}" \
+    -c "${SWAGGER_CODEGEN_CONF}" \
+    -o "${API_OUTPUT_PATH}" \
+    -p packageVersion="${API_VERSION}" \
+    --global-property models,modelTests=false,modelDocs=false,supportingFiles=__init__.py
+fi
 
 echo "Removing unused files for the Python API"
 git clean -f ${API_OUTPUT_PATH}/.openapi-generator
