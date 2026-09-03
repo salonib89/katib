@@ -21,7 +21,7 @@ RUN if [ "${TARGETARCH}" = "arm64" ]; then \
     rm -rf /var/lib/apt/lists/*; \
     fi
 
-RUN pip install --prefer-binary --no-cache-dir -r requirements.txt --extra-index-url https://wheels.developerfirst.ibm.com/
+RUN pip install --prefer-binary --no-cache-dir -r requirements.txt --index-url https://wheels.developerfirst.ibm.com/ --extra-index-url https://pypi.org/simple/
 RUN chgrp -R 0 ${TARGET_DIR} \
   && chmod -R g+rwX ${TARGET_DIR}
 
