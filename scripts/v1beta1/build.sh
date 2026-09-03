@@ -73,11 +73,7 @@ echo -e "\nBuilding file metrics collector image...\n"
 docker buildx build --platform "${ARCH}" -t "${REGISTRY}/file-metrics-collector:${TAG}" -f ${CMD_PREFIX}/metricscollector/${VERSION}/file-metricscollector/Dockerfile .
 
 echo -e "\nBuilding TF Event metrics collector image...\n"
-if [ "${ARCH}" == "ppc64le" ]; then
-  docker buildx build --platform "${ARCH}" -t "${REGISTRY}/tfevent-metrics-collector:${TAG}" -f ${CMD_PREFIX}/metricscollector/${VERSION}/tfevent-metricscollector/Dockerfile.ppc64le .
-else
-  docker buildx build --platform "${ARCH}" -t "${REGISTRY}/tfevent-metrics-collector:${TAG}" -f ${CMD_PREFIX}/metricscollector/${VERSION}/tfevent-metricscollector/Dockerfile .
-fi
+docker buildx build --platform "${ARCH}" -t "${REGISTRY}/tfevent-metrics-collector:${TAG}" -f ${CMD_PREFIX}/metricscollector/${VERSION}/tfevent-metricscollector/Dockerfile .
 
 # Suggestion images
 echo -e "\nBuilding suggestion images..."
