@@ -5,13 +5,12 @@ ENV TARGET_DIR /opt/katib
 ENV EARLY_STOPPING_DIR cmd/earlystopping/medianstop/v1beta1
 ENV PYTHONPATH ${TARGET_DIR}:${TARGET_DIR}/pkg/apis/manager/v1beta1/python
 
-RUN apt-get -y update && \
-    apt-get -y install g++ make && \
-    if [ "${TARGETARCH}" = "ppc64le" ] || [ "${TARGETARCH}" = "arm64" ]; then \
-      apt-get -y install gfortran libopenblas-dev liblapack-dev; \
-    fi && \
+RUN if [ "${TARGETARCH}" = "ppc64le" ] || [ "${TARGETARCH}" = "arm64" ]; then \
+    apt-get -y update && \
+    apt-get -y install gfortran libopenblas-dev liblapack-dev && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*; \
+  fi
 
 ADD ./pkg/ ${TARGET_DIR}/pkg/
 ADD ./${EARLY_STOPPING_DIR}/ ${TARGET_DIR}/${EARLY_STOPPING_DIR}/
