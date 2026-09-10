@@ -17,7 +17,12 @@ ADD ./${SUGGESTION_DIR}/ ${TARGET_DIR}/${SUGGESTION_DIR}/
 
 WORKDIR  ${TARGET_DIR}/${SUGGESTION_DIR}
 
-RUN pip install --prefer-binary --no-cache-dir -r requirements.txt --index-url https://wheels.developerfirst.ibm.com/ppc64le/linux/+simple/ --extra-index-url https://pypi.org/simple/
+RUN if [ "${TARGETARCH}" = "ppc64le" ]; then \
+      pip install --prefer-binary --no-cache-dir -r requirements.txt \
+        --extra-index-url https://wheels.developerfirst.ibm.com/ppc64le/linux/+simple/; \
+    else \
+      pip install --prefer-binary --no-cache-dir -r requirements.txt; \
+    fi
 RUN chgrp -R 0 ${TARGET_DIR} \
   && chmod -R g+rwX ${TARGET_DIR}
 
